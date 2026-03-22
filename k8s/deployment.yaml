@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter
+  namespace: jupyter-ml
+  labels:
+    app: jupyter
+    project: claude-ml-project2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter
+  template:
+    metadata:
+      labels:
+        app: jupyter
+        project: claude-ml-project2
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: jupyter
+        image: jupyter/scipy-notebook:latest
+        command:
+        - start-notebook.sh
+        args:
+        - --NotebookApp.token=claude-ml-2026
+        - --NotebookApp.password=''
+        - --NotebookApp.allow_origin='*'
+        - --NotebookApp.ip=0.0.0.0
+        ports:
+        - containerPort: 8888
+          name: notebook
+        env:
+        - name: JUPYTER_ENABLE_LAB
+          value: "yes"
+        - name: JUPYTER_TOKEN
+          value: "claude-ml-2026"
+        - name: RESTARTABLE
+          value: "yes"
+        volumeMounts:
+        - name: jupyter-storage
+          mountPath: /home/jovyan/work
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+      volumes:
+      - name: jupyter-storage
+        persistentVolumeClaim:
+          claimName: jupyter-pvc
