@@ -19,36 +19,52 @@ spec:
     spec:
       securityContext:
         runAsUser: 0
+      # initContainer installs extra ML packages on every pod start
+      initContainers:
+      - name: install-packages
+        image: tensorflow/tensorflow:2.13.0-jupyter
+        command:
+        - sh
+        - -c
+        - |
+          pip install --quiet wordcloud nltk scikit-learn seaborn pandas matplotlib
+          python -c "import nltk; nltk.download('stopwords', quiet=True)"
+          echo "All packages installed successfully"
+        volumeMounts:
+        - name: jupyter-storage
+          mountPath: /tf/work
       containers:
       - name: jupyter
-        image: jupyter/scipy-notebook:latest
+        # Using the official TensorFlow Jupyter image (includes TF 2.13, Keras, numpy)
+        image: tensorflow/tensorflow:2.13.0-jupyter
         command:
-        - start-notebook.sh
+        - jupyter
+        - notebook
         args:
+        - --ip=0.0.0.0
+        - --port=8888
+        - --no-browser
+        - --allow-root
         - --NotebookApp.token=claude-ml-2026
         - --NotebookApp.password=''
         - --NotebookApp.allow_origin='*'
-        - --NotebookApp.ip=0.0.0.0
+        - --notebook-dir=/tf/work
         ports:
         - containerPort: 8888
           name: notebook
         env:
-        - name: JUPYTER_ENABLE_LAB
-          value: "yes"
         - name: JUPYTER_TOKEN
           value: "claude-ml-2026"
-        - name: RESTARTABLE
-          value: "yes"
         volumeMounts:
         - name: jupyter-storage
-          mountPath: /home/jovyan/work
+          mountPath: /tf/work
         resources:
           requests:
             cpu: 250m
             memory: 512Mi
           limits:
-            cpu: 1000m
-            memory: 2Gi
+            cpu: 2000m
+            memory: 4Gi
       volumes:
       - name: jupyter-storage
         persistentVolumeClaim:
