@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyter-pvc
+  namespace: jupyter-ml
+  labels:
+    app: jupyter
+    project: claude-ml-project2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Uses the default StorageClass (hostpath on Docker Desktop)
+  # Remove storageClassName to auto-select cluster default
